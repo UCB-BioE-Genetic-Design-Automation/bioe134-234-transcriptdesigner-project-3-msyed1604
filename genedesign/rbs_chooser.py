@@ -1,12 +1,12 @@
 from typing import Set
 from genedesign.models.rbs_option import RBSOption
-import pandas as pd # type: ignore
+import pandas as pd 
+from genedesign.seq_utils.translate import Translate
 
-from genedesign.seq_utils import Translate, hairpin_counter
+from genedesign.seq_utils.hairpin_counter import hairpin_counter
 from genedesign.seq_utils.calc_edit_distance import calculate_edit_distance 
 
-pruned_data = pd.read_csv('pruned_data.csv')
-genes_info = pd.read_csv('genes_info.csv')
+merged_data = pd.read_csv('genedesign/data/merged_data1.csv')
 
 
 class RBSChooser:
@@ -29,17 +29,32 @@ class RBSChooser:
         self.translator.initiate()
 
         # Create RBSOption instances
-        for locus_tag, abundance in pruned_data:
-            if locus_tag in genes_info:
-                gene_info = genes_info[locus_tag]
-                utr = gene_info['UTR']
-                cds = gene_info['CDS']
-                gene_name = gene_info['gene']
-                first_six_aas = self.translator.run(cds[:18])
+        for locus_tag_index, gene_info in merged_data.iterrows():
+              
+              #print (gene_info[0])
+              gene_name = gene_info['gene']
+              utr = gene_info['UTR']
+              cds = gene_info['CDS']
+        
+              first_six_aas = self.translator.run(cds[:18])
 
-                rbs_option = RBSOption(utr=utr, cds=cds, gene_name=gene_name, first_six_aas=first_six_aas)
-                self.rbs_options.append(rbs_option)
-
+              rbs_option = RBSOption(utr=utr, cds=cds, gene_name=gene_name, first_six_aas=first_six_aas)
+              self.rbs_options.append(rbs_option)
+        
+    def validate_sequence(self, sequence: str) -> str:
+        """
+        Removes invalid characters from a DNA sequence.
+        Only allows valid DNA bases (A, T, C, G, N).
+        
+        Parameters:
+            sequence (str): The DNA sequence to sanitize.
+        
+        Returns:
+            str: The sanitized DNA sequence.
+        """
+        valid_bases = {'A', 'T', 'C', 'G', 'N'}
+        return ''.join(base for base in sequence if base in valid_bases)
+    
     def score_rbs_option(self, rbs_option: RBSOption, input_cds: str) -> float:
         """
         Score an RBSOption based on its compatibility with the input CDS.
@@ -51,17 +66,20 @@ class RBSChooser:
         Returns:
             float: A score representing the compatibility of the RBS option with the input CDS (lower is better).
         """
+        #Validate CDS
+        validated_cds = self.validate_sequence(input_cds)
+
         # Calculate edit distance
-        input_first_six_aas = self.translator.run(input_cds[:18])
+        input_first_six_aas = self.translator.run(validated_cds[:18])
         edit_distance = calculate_edit_distance(input_first_six_aas, rbs_option.first_six_aas)
 
 
         # Calculate hairpin count
-        combined_sequence = rbs_option.utr + input_cds[:50]  # Consider first 50 nucleotides of input CDS
+        combined_sequence = rbs_option.utr + validated_cds[:50]  # Consider first 50 nucleotides of input CDS
         hairpin_count = hairpin_counter(combined_sequence)
 
         # Calculate score (lower is better)
-        score = edit_distance + hairpin_count * 2 # Weigh hairpin count more heavily
+        score = edit_distance + hairpin_count[0] * 2 # Weigh hairpin count more heavily
 
         return score
 

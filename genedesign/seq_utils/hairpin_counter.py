@@ -1,4 +1,4 @@
-from genedesign.seq_utils.reverse_complement import reverse_complement
+from genedesign.seq_utils.reverse_complement import reverse_complement 
 
 def hairpin_counter(sequence, min_stem=3, min_loop=4, max_loop=9):
     """

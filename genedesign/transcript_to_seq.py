@@ -1,4 +1,4 @@
-from models.transcript import Transcript
+from genedesign.models.transcript import Transcript
 
 def transcript_to_seq(transcript: Transcript) -> str:
     """

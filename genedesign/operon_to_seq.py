@@ -1,5 +1,5 @@
-from models.operon import Operon
-from transcript_to_seq import transcript_to_seq
+from genedesign.models.operon import Operon
+from genedesign.transcript_to_seq import transcript_to_seq
 
 def operon_to_seq(operon: Operon) -> str:
     """
