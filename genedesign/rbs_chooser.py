@@ -14,7 +14,6 @@ class RBSChooser:
     A simple RBS selection algorithm that chooses an RBS from a list of options, excluding any RBS in the ignore set.
     """
 
-
     # Define class variables
     rbs_options: Set[RBSOption]
     translator: Translate
@@ -31,20 +30,19 @@ class RBSChooser:
         # Create RBSOption instances
         for locus_tag_index, gene_info in merged_data.iterrows():
               
-              #print (gene_info[0])
-              gene_name = gene_info['gene']
-              utr = gene_info['UTR']
-              cds = gene_info['CDS']
-        
-              first_six_aas = self.translator.run(cds[:18])
+            gene_name = gene_info['gene']
+            utr = gene_info['UTR']
+            cds = gene_info['CDS']
+    
+            first_six_aas = self.translator.run(cds[:18])
 
-              rbs_option = RBSOption(utr=utr, cds=cds, gene_name=gene_name, first_six_aas=first_six_aas)
-              self.rbs_options.append(rbs_option)
+            rbs_option = RBSOption(utr=utr, cds=cds, gene_name=gene_name, first_six_aas=first_six_aas)
+            self.rbs_options.append(rbs_option)
         
     def validate_sequence(self, sequence: str) -> str:
         """
         Removes invalid characters from a DNA sequence.
-        Only allows valid DNA bases (A, T, C, G, N).
+        Only allows valid DNA bases (A, T, C, G).
         
         Parameters:
             sequence (str): The DNA sequence to sanitize.
@@ -52,7 +50,8 @@ class RBSChooser:
         Returns:
             str: The sanitized DNA sequence.
         """
-        valid_bases = {'A', 'T', 'C', 'G', 'N'}
+        valid_bases = {'A', 'T', 'C', 'G'}
+        
         return ''.join(base for base in sequence if base in valid_bases)
     
     def score_rbs_option(self, rbs_option: RBSOption, input_cds: str) -> float:
